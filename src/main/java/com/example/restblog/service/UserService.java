@@ -2,56 +2,64 @@ package com.example.restblog.service;
 
 
 import com.example.restblog.data.Post;
+import com.example.restblog.data.PostsRepository;
 import com.example.restblog.data.User;
+import com.example.restblog.data.UsersRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 
+// @Service allows us to register and inject UserService into any other class we want using Spring's IoC Container
 @Service
 public class UserService {
 
-    private List<User> userList = setUserList();
-    private List<Post> posts = setPostList();
+    //    TODO: inject UsersRepository and PostsRepository into UserService class via constructor injection
+    private final UsersRepository usersRepository;
+    private final PostsRepository postsRepository;
 
-    public List<User> getUsersList(){
-        return userList;
+    public UserService(UsersRepository usersRepository, PostsRepository postsRepository){
+        this.usersRepository = usersRepository;
+        this.postsRepository = postsRepository;
     }
 
-    public List<Post> getPostList(){
-        return posts;
+    public List<User> getUsersList(){ // TODO: rename this 'getAllUsers'
+        return usersRepository.findAll();
     }
 
+    public List<Post> getPostList(){ // TODO rename this to getAllPosts
+        return postsRepository.findAll();
+    }
+
+    // We need to associate posts and users here
+    public void addPost(Post newPost, String username){
+
+        // get the User object who made the post
+        User user = getUserByUsername(username);
+
+        // associate the post with the user object
+        user.getPosts().add(newPost);
+        // associate the *user* with the post object
+        newPost.setUser(user);
+
+        // TODO: call postsRepository.save(newPost)
+        postsRepository.save(newPost);
+    }
+
+    // Taken from UsersController
     public User getUserById(Long id){
-        for (User user : userList){
-            if (user.getId().equals(id)){
-                return user;
-            }
-        }
-        return null;
+        // TODO: use usersRepository.findById(id).orElseThrow()
+        return usersRepository.findById(id).orElseThrow(); //throws an exception if the user cannot be found by id
     }
 
+    // Taken from UsersController
     public User getUserByUsername(String username){
-        for (User user : userList){
-            if (user.getUsername().equals(username)){
-                return user;
-            }
-        };
-        return null;
+        // TODO: don't forget to change this to usersRepository.findByUsername(username)
+        return usersRepository.findByUsername(username);
     }
 
-    private List<User> setUserList(){
-        List<User> userList = new ArrayList<>();
-        userList.add(new User(1L, "billybobboy", "billy@bob.com", "12345"));
-        userList.add(new User(2L, "annarafael", "anna@gmail.com", "54321"));
-        return userList;
-    }
-
-    private List<Post> setPostList(){
-        List<Post> postList = new ArrayList<>();
-        postList.add(new Post(1L, "Cool title", "Cool content"));
-        postList.add(new Post(2L, "Fake title", "Fake content"));
-        postList.add(new Post(3L, "Not from DB", "Fake data"));
-        return postList;
+    public void deletePostById(long id){
+        // TODO: change old code to postsRepository.deleteById(id)
+        postsRepository.deleteById(id);
     }
 }
